@@ -1,0 +1,13 @@
+#pragma once
+
+#include "expression.hpp"
+
+namespace sya {
+  struct FunctionInfo {
+    std::string name;
+    size_t arg_count;
+  };
+
+  [[nodiscard]] Expression to_rpn(const Expression& expr);
+  [[nodiscard]] float evaluate_rpn(const Expression& rpn_expr);
+}

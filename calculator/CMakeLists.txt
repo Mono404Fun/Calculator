@@ -12,7 +12,9 @@ if(MSVC)
     add_compile_options(/W4)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+    add_definitions(-DFMT_HEADER_ONLY)
 endif()
+
 
 # include directory (headers)
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -22,6 +24,9 @@ set(SOURCES
     # src/expression.cpp
     src/main.cpp
     src/token.cpp
+    src/expression.cpp
+    src/operator.cpp
+    src/logic.cpp
 )
 
 # create executable
@@ -29,6 +34,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Precompiled headers for faster builds
 target_precompile_headers(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include/pch.hpp)
+target_include_directories(calculator PRIVATE /usr/include)  # usually where fmt/core.h is
 
 # set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -48,7 +54,7 @@ if(MSVC)
 else()
     # compilation optimizations: LTO and dead code elimination in release
     target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:-O3 -flto -ffunction-sections -fdata-sections>
+        $<$<CONFIG:Release>:-O3 -Os -flto -ffunction-sections -fdata-sections>
     )
     # linking optimizations
     target_link_options(${PROJECT_NAME} PRIVATE

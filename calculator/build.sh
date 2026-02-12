@@ -17,7 +17,7 @@ run_file() {
 
 build_cmake() {
   clear
-  
+
   echo -e "${CYAN}=> Buliding project...${RESET}"
   mkdir -p "./$OUT_DIR"
   cd "./$OUT_DIR"
@@ -28,12 +28,11 @@ build_cmake() {
   cd ..
 
   if [[ $? -eq 0 ]]; then
-    # echo -e "${GREEN}==> Build succeeded in ${YELLOW}${DURATION} ms${RESET}! Binary: ${CYAN}${EXE_PATH}${RESET}"
     START_TIME=$(date +%s%3N)
     run_file
     END_TIME=$(date +%s%3N)
     DURATION=$((END_TIME - START_TIME))
-    
+
     echo ""
     echo -e "${GREEN}=> Finished in ${YELLOW}${DURATION} ms${RESET}"
   else

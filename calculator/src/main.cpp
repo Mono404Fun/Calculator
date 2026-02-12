@@ -1,8 +1,9 @@
-#include "token.hpp"
+#include "ui.hpp"
+#include "operator.hpp"
 
-auto main() -> int32_t {
-  sya::Token token("Token1", sya::TokenType::UNKNOWN);
-  utils::println("{}", token.at(2));
+int main() {
+  console::Interface ui(sya::functions);
+  ui.run();
 
   return 0;
 }

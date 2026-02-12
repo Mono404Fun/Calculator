@@ -1,45 +1,75 @@
+#pragma once
+
 #include "token.hpp"
 #include "utils.hpp"
 
-#include <deque>
-#include <string_view>
+#include <deque> // for std::deque
+#include <string_view> // for std::string_view
+#include <optional>
 
 namespace sya {
-  class Expression : public utils::ItClasses<std::deque<Token>> {
+  /**
+   * @brief Making *Expression* objects creates a tokenized expression, from the given string.
+   */
+  class Expression { // deriving from ItClasses to make it iterable
     private:
-    using token_list = std::deque<Token>;
-    using it = token_list::iterator;
-    using cit = token_list::const_iterator;
+    using t = std::deque<Token>; // to make things clean
+    using it = decltype(std::begin(std::declval<t&>()));
+    using cit = decltype(std::cbegin(std::declval<t&>()));
 
-    std::string m_expr;
-    token_list m_tokens;
+    std::string m_expr; // the string given expression
+    t m_tokens; // the tokenized expression as a std::deque<Token>
 
     public:
-    Expression() noexcept = default;
-    explicit Expression(const std::string_view expr) noexcept;
-    Expression(const Expression& expr);
-    Expression(Expression&& expr) noexcept;
+    /************************\
+    |      CONSTRUCTORS      |
+    \************************/
+    Expression() noexcept = default; // default ctor
+    Expression(std::string_view expr);
+    Expression(const Expression& expr) = default; // copying
+    Expression(Expression&& expr) noexcept = default; // moving
 
-    Expression& operator=(const Expression&  expr);
-    Expression& operator=(const Expression&& expr) noexcept;
+    /************************\
+    |        OPERATORS       |
+    \************************/
+    Expression& operator=(const Expression&  expr) = default; // copying
+    Expression& operator=(Expression&& expr) noexcept = default; // moving
 
-    [[nodiscard]] constexpr inline const std::string& expresion() const noexcept;
-    [[nodiscard]] constexpr inline const token_list& tokens() const noexcept;
+    /************************\
+    |         METHODS        |
+    \************************/
+    /*Cconvert given string expression to valid ready to analyze tokens*/
+    it begin() noexcept;
+    it end() noexcept;
 
-    it begin() { return tokens.begin(); }
-    it end() { return tokens.end(); }
-    cit begin() const;
-    cit end() const;
-    cit cbegin() const;
-    cit cend() const;
+    cit begin() const noexcept;
+    cit end() const noexcept;
 
-    void push(Token &token);
-    void pop();
-    [[nodiscard]] Token& first() const noexcept;
-    [[nodiscard]] Token& last() const noexcept;
+    cit cbegin() const noexcept;
+    cit cend() const noexcept;
 
-    [[nodiscard]] void clear() const noexcept;
-    [[nodiscard]] bool empty() const noexcept;
-    [[nodiscard]] size_t size() const noexcept;
-  }
+    void tokenize();
+
+    [[nodiscard]] const std::string& expression() const noexcept; // return string expression
+    void set_expression(std::string_view expr);
+    [[nodiscard]] t tokens() const noexcept; // return tokens
+
+    void push(Token token); // push a new token to the expression (tokens)
+    void pop(); // pop from expression
+    [[nodiscard]] std::optional<Token> first() const; // return first token in the expression
+    [[nodiscard]] std::optional<Token> last() const; // return last token in the expresion
+    [[nodiscard]] std::string first_v() const; // return first token in the expression
+    [[nodiscard]] std::string last_v() const; // return last token in the expresion
+    [[nodiscard]] TokenType first_t() const; // return first token in the expression
+    [[nodiscard]] TokenType last_t() const; // return last token in the expresion
+
+    void clear() noexcept; // clear string expression and tokens as well
+    [[nodiscard]] bool empty() const noexcept; // if expression is empty
+    [[nodiscard]] size_t size() const noexcept; // return expression size
+
+    friend std::ostream& operator<<(std::ostream& os, Expression expr) { return os << expr.m_expr; }
+    Token& operator[](std::size_t i) noexcept;
+    const Token& operator[](std::size_t i) const noexcept;
+    const Token& at(std::size_t i) const;
+  };
 }

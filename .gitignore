@@ -1,2 +1,6 @@
 calculator/include/token.test.hpp
 build/
+calculator/build/
+calculator/bin/
+calculator/lib/
+.cache/

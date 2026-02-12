@@ -1,8 +1,8 @@
 {
-  "editor.fontFamily": "JetBrains Mono, Fira Code, monospace",
+  "editor.fontFamily": "JetBrainsMono Nerd Font Mono",
   "editor.fontSize": 13,
   "editor.lineHeight": 1.6,
-  "editor.fontLigatures": true,
+  "editor.fontLigatures": false,
   "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorBlinking": "smooth",
   "editor.smoothScrolling": true,
@@ -12,7 +12,6 @@
   "editor.renderControlCharacters": false,
   "editor.wordWrap": "on",
   "editor.mouseWheelZoom": true,
-
   "editor.quickSuggestions": {
     "comments": false,
     "strings": false,
@@ -32,7 +31,7 @@
 
   "C_Cpp.intelliSenseEngine": "disabled",
   "C_Cpp.autocomplete": "disabled",
-  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.errorSquiggles": "disabled",
 
   "clangd.path": "clangd",
   "clangd.arguments": [
@@ -66,7 +65,7 @@
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.scrollback": 10000,
 
-  "debug.inlineValues": true,
+  "debug.inlineValues": "on",
   "debug.showBreakpointsInOverviewRuler": false,
 
   "git.enableSmartCommit": true,
