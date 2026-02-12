@@ -29,10 +29,6 @@ Navigate to the `calculator/` directory and run:
 ./build.bat
 ```
 
-### Usage
-
-[Add usage example here once core functionality is finalized]
-
 ## Project Structure
 
 ```
