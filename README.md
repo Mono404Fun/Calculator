@@ -1,6 +1,4 @@
-# Inline Calculator: An advanced C++ project 🖩
-
-> Currently working on...
+# ExprEval: An advanced C++ calculator 🖩
 
 ## 🌏 Setup guide:
 In order to **compile** and **run** the project, open the ***Terminal*** in the ./calculator/ directory and **run**:
