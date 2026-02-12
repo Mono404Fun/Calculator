@@ -11,7 +11,6 @@ namespace sya {
       Expression output; // the output expression in RPN form
       std::vector<Token> op_stack; // the operator stack which stores operators and functions during the conversion process
       std::vector<FunctionInfo> fs; // the function stack which stores function information (name and argument count) during the conversion process
-      size_t pb = 0; // parenthesis balance counter to keep track of mismatched parentheses
 
       if (expr.empty()) throw std::runtime_error("Empty expression"); // handle empty expression case
       if ((expr.at(0).type() == tt::OPERATOR && !is_unary(expr.at(0).get()))
@@ -54,7 +53,6 @@ namespace sya {
           }
           case tt::OPEN_PARENT: { // if it's an open parenthesiss
             op_stack.push_back(token); // push it to the operator stack
-            pb++; // increment parenthesis balance counter
             break;
           }
           case tt::SEPARATOR: { // if it's a function argument separator (comma) like in "max(1, 2)"
