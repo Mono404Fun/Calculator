@@ -108,9 +108,9 @@ private:
 
   void print_banner() const {
     std::cout
-      << "========================================\n"
-      << " ExprEval — A C++ inline calculator     \n"
-      << "========================================\n"
+      << "+--------------------------------------+\n"
+      << "| ExprEval: A C++ inline calculator    |\n"
+      << "+--------------------------------------+\n"
       << "Type :help for commands\n";
   }
 
