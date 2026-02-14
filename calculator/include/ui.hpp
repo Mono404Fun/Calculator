@@ -7,10 +7,16 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iomanip>
+#include <math.h>
 
 #include "logic.hpp"
 
 namespace console {
+struct HistoryEntry {
+  size_t id;
+  std::string expression;
+  std::string result;
+};
 
 class Table {
 public:
@@ -19,6 +25,10 @@ public:
 
   void add_row(std::vector<std::string> row) {
     rows_.push_back(std::move(row));
+  }
+
+  void add_row(std::initializer_list<std::string> row) {
+    rows_.emplace_back(row);
   }
 
   void print(std::ostream& os = std::cout) const {
@@ -87,26 +97,33 @@ public:
     std::string input;
     while (true) {
       std::cout << "\n> ";
-      if (!std::getline(std::cin, input))
-        break;
-
-      if (input.empty())
-        continue;
-
+      if (!std::getline(std::cin, input)) break;
+      if (input.empty()) continue;
       if (input[0] == ':') {
-        if (!handle_command(input))
-          break;
-      } else {
-        handle_expression(input);
+        if (!handle_command(input.substr(1))) break;
       }
+      else handle_expression(input);
 
       m_expr.clear();
     }
   }
 
 private:
+  std::unordered_map<std::string, std::string> commands = {
+    { ":help", "Show available commands" },
+    { ":funcs", "List supported functions" },
+    { ":clear", "Clear the screen" },
+    { ":quit",  "Exit program" },
+    { ":history", "Show calculation history" },
+    { ":vars", "Show defined variables" },
+    { ":clearhistory", "Clear calculation history" },
+    { ":clearvars", "Clear defined variables" },
+    { ":clearall", "Clear both history and variables" },
+    { ":remove_variable", "Remove a specific variable by name" }
+  };
   std::unordered_map<std::string, std::size_t> m_functions;
   std::vector<sya::Variable> variables;
+  std::vector<HistoryEntry> history;
   sya::Expression m_expr;
 
   void print_banner() const {
@@ -118,11 +135,58 @@ private:
   }
 
   bool handle_command(std::string_view cmd) {
-    if (cmd == ":quit") return false;
+    if (cmd == "quit") return false;
 
-    if (cmd == ":help") print_help();
-    else if (cmd == ":funcs") print_functions();
-    else if (cmd == ":clear") clear();
+    if (cmd == "help") print_help();
+    else if (cmd == "funcs") print_functions();
+    else if (cmd == "clear") clear();
+    else if (cmd == "history") {
+      if (history.empty()) {
+        std::cout << "No history available.\n";
+        return true;
+      }
+      Table t({ "ID", "Expression", "Result" });
+      for (const auto& entry : history)
+        t.add_row({ std::to_string(entry.id), entry.expression, entry.result });
+      t.print();
+    }
+    else if (cmd=="vars") {
+      if (variables.empty()) {
+        std::cout << "No variables defined.\n";
+        return true;
+      }
+      Table t({ "Name", "Value" });
+      for (const auto& [name, value] : variables)
+        t.add_row({ name, std::to_string(value) });
+      t.print();
+    }
+    else if (cmd=="clearhistory") {
+      history.clear();
+      std::cout << "History cleared.\n";
+    }
+    else if (cmd=="clearvars") {
+      variables.clear();
+      std::cout << "Variables cleared.\n";
+    }
+    else if (cmd=="clearall") {
+      history.clear();
+      variables.clear();
+      std::cout << "History and variables cleared.\n";
+    }
+    else if (cmd == "remove_variable") {
+      std::string var_name;
+      std::cout << "Enter variable name to remove: ";
+      std::cin >> var_name;
+
+      auto it = std::find_if(variables.begin(), variables.end(), [&](const sya::Variable var)
+                                                                { return var.name == var_name; });
+      if (it != variables.end()) {
+        variables.erase(it);
+        std::cout << "Variable '" << var_name << "' removed.\n";
+      } else {
+        std::cout << "Variable '" << var_name << "' not found.\n";
+      }
+    }
     else std::cout << "Unknown command. Use :help\n";
     return true;
   }
@@ -132,6 +196,7 @@ private:
       m_expr.set_expression(expr);
       m_expr.tokenize();
       auto result = sya::evaluate_rpn(sya::to_rpn(m_expr), variables);
+      history.push_back(HistoryEntry{ history.size() + 1, std::string(expr), std::to_string(result) });
 
       std::cout << "Expression: " << result << "\n";
     }
@@ -142,10 +207,8 @@ private:
 
   void print_help() const {
     Table t({ "Command", "Description" });
-    t.add_row({ ":help",  "Show available commands" });
-    t.add_row({ ":funcs", "List supported functions" });
-    t.add_row({ ":clear", "Clear the screen" });
-    t.add_row({ ":quit",  "Exit program" });
+    for (const auto& [cmd, desc] : commands)
+      t.add_row({ cmd, desc });
     t.print();
   }
 
