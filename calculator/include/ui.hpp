@@ -99,11 +99,14 @@ public:
       } else {
         handle_expression(input);
       }
+
+      m_expr.clear();
     }
   }
 
 private:
   std::unordered_map<std::string, std::size_t> m_functions;
+  std::vector<sya::Variable> variables;
   sya::Expression m_expr;
 
   void print_banner() const {
@@ -128,7 +131,7 @@ private:
     try {
       m_expr.set_expression(expr);
       m_expr.tokenize();
-      auto result = sya::evaluate_rpn(sya::to_rpn(m_expr));
+      auto result = sya::evaluate_rpn(sya::to_rpn(m_expr), variables);
 
       std::cout << "Expression: " << result << "\n";
     }

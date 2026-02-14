@@ -18,7 +18,7 @@ namespace sya {
 enum class TokenType : uint8_t {
   NUMBER, OPERATOR,
   OPEN_PARENT, CLOSE_PARENT,
-  SEPARATOR, FUNCTION, UNKNOWN,
+  SEPARATOR, FUNCTION, VARIABLE, UNKNOWN,
 };
 
 /**

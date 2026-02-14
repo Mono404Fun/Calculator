@@ -10,6 +10,7 @@ namespace sya {
     {"*", OperatorPrec::MUL_DIV},
     {"/", OperatorPrec::MUL_DIV},
     {"^", OperatorPrec::POW},
+    {"=", OperatorPrec::ASSIGNEMENT},
   };
 
   std::unordered_map<std::string, std::size_t> functions = {
@@ -47,8 +48,15 @@ namespace sya {
   bool is_right_associative(char op) { return is_right_associative(std::string(1, op)); }
   OperatorPrec opprec(const std::string& op) { return operators[op]; }
   bool is_right_associative(const std::string& op) {
-    if (op == "^") return true;
+    if (op == "^" || op == "=") return true;
     return false;
+  }
+  bool validate_variable_name(const std::string& name) noexcept {
+    if (name.empty() || !std::isalpha(name[0])) return false; // variable name must start with a letter
+    for (char c : name) {
+      if (!std::isalnum(c) && c != '_') return false; // variable name can only contain letters, digits, and underscores
+    }
+    return true;
   }
   [[nodiscard]] float apply_operator(const std::string& op, float left, float right) {
     if (op == "+") return left + right;

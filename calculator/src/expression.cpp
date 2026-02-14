@@ -80,6 +80,7 @@ namespace sya {
 
       if (is_number(ct)) push({ct, tt::NUMBER}); // if it's a number, push as number token
       else if (is_function(ct)) push({ct, tt::FUNCTION}); // if it's a function, push as function token
+      else if (validate_variable_name(ct)) { push({ct, tt::VARIABLE}); } // if it's a valid variable name, push as variable token
       else if (ct.size() == 1 && is_operator(ct.at(0))) push_op(ct); // if it's a single char operator, push as operator token
       else push({ct, tt::UNKNOWN}); // otherwise, push as unknown token
 
@@ -91,7 +92,7 @@ namespace sya {
       size_t pos = i+1; // for error messages (1-based index)
 
       if (std::isspace(c)) { // skip whitespace, but check for invalid whitespace in numbers like "1 2" or "1. 2"
-        if (numlike(n) && !ct.empty())
+        if (!ct.empty() && (numlike(n) || is_letter(n)))
           throw std::runtime_error(fmt::format("Invalid expression: unexpected whitespace in number at position {}", pos));
 
         continue;
@@ -135,13 +136,14 @@ namespace sya {
         continue;
       }
       if (is_operator(c)) {
+        push_token(); // push any current token before handling the operator
+
         if (is_unary(c) && ct.empty() &&
         (empty() || last_t() == tt::OPERATOR    ||
                     last_t() == tt::OPEN_PARENT ||
                     last_t() == tt::SEPARATOR)) { // handle unary operators at the start of the expression or after an operator/open parenthesis/separator
           if (n == ')' || n == ',' || std::isspace(n))
             throw std::runtime_error(fmt::format("Invalid expression: unexpected {} after unary operator at position {}", (std::isspace(n) ? "[SPACE]" : std::to_string(n)), pos));
-
           if (is_unary(n) && (n == c || n == '-' || n == '+')) // handle unary operator duplication
             throw std::runtime_error(fmt::format("Invalid expression: unexpected unary operator '{}' after unary operator at position {}", static_cast<char>(n), pos));
 
@@ -149,24 +151,29 @@ namespace sya {
           if (n == '(') ct += '1'; // handle cases like "-(3+4)" by treating them as "-1*(3+4)"
           
           continue;
+        } else if (c == '=') {
+          if (is_number(last_v()) || last_t() == tt::CLOSE_PARENT) // handle cases like "x=5" or "(1+2)=3" by treating them as "x=5" or "(1+2)=3"
+            throw std::runtime_error(fmt::format("Invalid expression: unexpected assignment operator at position {}", pos));
+          if (is_function(last_v())) // handle cases like "sin=5" by treating them as "sin=5"
+            throw std::runtime_error(fmt::format("Invalid expression: unexpected assignment operator after function name at position {}", pos));
         }
 
         if (is_operator(n) && !is_unary(n)) // handle operator duplication
           throw std::runtime_error(fmt::format("Invalid expression: unexpected operator '{}' after operator at position {}", static_cast<char>(n), pos));
 
-        push_token(); // push any current token before handling the operator
         char op[2] = {static_cast<char>(c), '\0'}; // convert operator char to string
         push_op(op); // push the operator token
         
         continue;
       }
-      if (is_letter(c)) {
-        ct += c; // build the function name token
+      if (is_letter(c)) { 
+        ct += c;
 
-        if (is_letter(n) || n == '(') // if the next character is a letter or an open parenthesis, keep building the function name token
-          continue;
-        else
-          throw std::runtime_error(fmt::format("Invalid character {} for function name at position {}", (std::isspace(n) ? "[SPACE]" : std::to_string(static_cast<char>(n))), pos));
+        // if (is_letter(n) || n == '(' || isdigit(n) || std::isspace(n) || is_operator(n))
+        //   continue;
+        // else
+        //   throw std::runtime_error(fmt::format("Invalid character {} at position {}", static_cast<char>(c), pos));
+        continue;
       }
       if (c == ',') {
         push_token(); // push any current token before handling the separator

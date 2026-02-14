@@ -8,6 +8,11 @@ namespace sya {
     size_t arg_count;
   };
 
+  struct Variable {
+    std::string name;
+    float value;
+  };
+
   [[nodiscard]] Expression to_rpn(const Expression& expr);
-  [[nodiscard]] float evaluate_rpn(const Expression& rpn_expr);
+  [[nodiscard]] float evaluate_rpn(const Expression& rpn_expr, std::vector<Variable>& variables);
 }

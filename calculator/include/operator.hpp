@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 namespace sya {
-  enum class OperatorPrec : uint8_t { ADD_SUB = 1, MUL_DIV, POW };
+  enum class OperatorPrec : uint8_t { ADD_SUB = 1, MUL_DIV, POW, ASSIGNEMENT };
   extern std::unordered_map<std::string, OperatorPrec> operators;
   extern std::unordered_map<std::string, std::size_t> functions;
 
@@ -14,6 +14,7 @@ namespace sya {
   bool is_unary(char op);
   bool is_right_associative(const std::string& op);
   bool is_right_associative(char op);
+  bool validate_variable_name(const std::string& name) noexcept;
   OperatorPrec opprec(const std::string& op);
 
   [[nodiscard]] float apply_operator(const std::string& op, float left, float right);
