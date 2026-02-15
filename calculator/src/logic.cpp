@@ -42,7 +42,15 @@ namespace sya {
           case tt::OPERATOR: { // if it's an operator
             // pop operators from the operator stack to the output while the operator at the top
             // of the stack has greater precedence, or equal precedence and is left associative (for non-unary operators)
-            if (token.get() == "=") continue;
+            if (token.get() == "=") {
+              // all output tokens so far must be VARIABLE only
+              for (const auto& t : output) {
+                if (t.type() != tt::VARIABLE) {
+                  throw std::runtime_error("Invalid assignment: cannot assign to an expression, only to variables");
+                }
+              }
+              continue;
+            }
             while (!op_stack.empty()
               && is_operator(op_stack.back().get())
               && (opprec(op_stack.back().get()) > opprec(token.get())

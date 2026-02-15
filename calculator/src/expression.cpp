@@ -107,6 +107,10 @@ namespace sya {
         }
 
         ct += c;
+        if (is_letter(n)) { // handle cases like "1x" by treating them as "1*x"
+          push_token(); // push the current number token before handling the implicit multiplication
+          push_op("*"); // push the implicit multiplication operator
+        }
         continue;
       }
       if (c == '(') {
@@ -115,7 +119,7 @@ namespace sya {
 
         push_token(); // push any current token before handling the parenthesis
 
-        if (is_number(last_v()) ||
+        if (is_number(last_v()) || last_t() == tt::VARIABLE ||
             last_t() == tt::CLOSE_PARENT) push_op("*"); // handle implicit multiplication like "2(3+4)" or "(1+2)(3+4)"
 
         push({"(", tt::OPEN_PARENT}); // push the open parenthesis token
@@ -127,7 +131,7 @@ namespace sya {
         push_token(); // push any current token before handling the parenthesis
         push({")", tt::CLOSE_PARENT}); // push the close parenthesis token
 
-        if (std::isdigit(n)) push_op("*"); // handle implicit multiplication like "(1+2)3"
+        if (std::isdigit(n) || is_letter(n)) push_op("*"); // handle implicit multiplication like "(1+2)3"
 
         pb--; // decrement parenthesis balance counter
         if (pb < 0)
@@ -169,10 +173,6 @@ namespace sya {
       if (is_letter(c)) { 
         ct += c;
 
-        // if (is_letter(n) || n == '(' || isdigit(n) || std::isspace(n) || is_operator(n))
-        //   continue;
-        // else
-        //   throw std::runtime_error(fmt::format("Invalid character {} at position {}", static_cast<char>(c), pos));
         continue;
       }
       if (c == ',') {
