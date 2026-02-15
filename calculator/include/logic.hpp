@@ -14,5 +14,5 @@ namespace sya {
   };
 
   [[nodiscard]] Expression to_rpn(const Expression& expr);
-  [[nodiscard]] float evaluate_rpn(const Expression& rpn_expr, std::vector<Variable>& variables);
+  [[nodiscard]] std::optional<float> evaluate_rpn(const Expression& rpn_expr, std::vector<Variable>& variables);
 }

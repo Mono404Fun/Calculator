@@ -9,17 +9,15 @@ namespace sya {
       using tt = TokenType;
 
       Expression output; // the output expression in RPN form
+      Token token;
       std::vector<Token> op_stack; // the operator stack which stores operators and functions during the conversion process
       std::vector<FunctionInfo> fs; // the function stack which stores function information (name and argument count) during the conversion process
       std::vector<std::string> stored_variable; // to store variable tokens to push them later in end of convertion process
-      size_t i =  0;
 
       if (expr.empty()) throw std::runtime_error("Empty expression"); // handle empty expression case
       if ((expr.at(0).type() == tt::OPERATOR && !is_unary(expr.at(0).get()))
           || (expr.at(expr.size()-1).type() == tt::OPERATOR && !is_unary(expr.at(expr.size()-1).get()))) // handle invalid starting/ending operator case
         throw std::runtime_error("Invalid expression: unexpected operator at the start/end of the expression");
-
-      std::cout << expr[1] << std::endl;
 
       op_stack.reserve(expr.size()); // reserve space for operators to avoid unnecessary reallocations later
 
@@ -34,7 +32,8 @@ namespace sya {
         while (!op_stack.empty() && op_stack.back().type() != tt::OPEN_PARENT) pop_operator();
       };
 
-      for (const Token& token : expr) { // iterate over tokens in the input expression
+      for (size_t i = 0; i < expr.size(); i++) { // iterate over tokens in the input expression
+        token = expr[i]; // get the current token
         switch (token.type()) { // handle token based on its type
           case tt::NUMBER: { // if it's a number, push it directly to the output
             output.push(token);
@@ -57,7 +56,7 @@ namespace sya {
             break;
           }
           case tt::VARIABLE : {
-            if (expr[i+1].get() == "=")
+            if ((i + 1) < expr.size() && expr[i + 1].type() == tt::OPERATOR && expr[i + 1].get() == "=")
               stored_variable.push_back(token.get()); // store variable token
             else
               output.push(token); // push variable token directly to output for use in evaluation              
@@ -105,8 +104,6 @@ namespace sya {
           }
           default: throw std::logic_error("Invalid token: unsupported token type"); // handle unsupported tokens
         }
-
-        ++i;
       }
 
       // if there are still functions in the function stack after processing all tokens,
@@ -115,24 +112,41 @@ namespace sya {
         throw std::logic_error("Invalid expression: mismatched parentheses");
 
       while (!op_stack.empty()) pop_operator(); // pop any remaining operators from the operator stack to the output
-      if (!stored_variable.empty()) { // push any stored variable tokens to the output after processing the entire expression
-        for (const auto& var : stored_variable) {
-          output.push({var, tt::VARIABLE});
-          output.push({"=", tt::OPERATOR}); // push an assignment operator after each variable token to handle variable assignment in the evaluation phase
+      
+      if (!stored_variable.empty()) {
+        bool has_assignment = false;
+        for (const Token& t : expr) {
+          if (t.type() == tt::OPERATOR && t.get() == "=") {
+            has_assignment = true;
+            break;
+          }
+        }
+
+        if (has_assignment) {
+          // Emit assignments in reverse order so right-most assignment happens first.
+          for (auto it = stored_variable.rbegin(); it != stored_variable.rend(); ++it) {
+            output.push({*it, tt::VARIABLE});
+            output.push({"=", tt::OPERATOR});
+          }
+        } else {
+          for (const auto& var : stored_variable)
+            output.push({var, tt::VARIABLE});
         }
       }
 
       return output; // rpn expression
   }
 
-  [[nodiscard]] float evaluate_rpn(const Expression& rpn_expr, std::vector<Variable>& variables) {
+  [[nodiscard]] std::optional<float> evaluate_rpn(const Expression& rpn_expr, std::vector<Variable>& variables) {
     using tt = TokenType;
+    Token token;
     std::vector<float> stack; // evaluation stack for evaluating the RPN expression
-    size_t i = 0;
+    bool is_assignement = false; // flag to indicate if the expression contains an assignment operator
 
     stack.reserve(rpn_expr.size());    
 
-    for (const Token& token : rpn_expr) { // iterate over tokens in the RPN expression
+    for (size_t i = 0; i < rpn_expr.size(); i++) { // iterate over tokens in the RPN expression
+      token = rpn_expr[i]; // get the current token
       switch (token.type()) { // handle token based on its type
         case tt::NUMBER: { // if it's a number, push its value to the evaluation stack
           stack.push_back(std::stof(token.get()));
@@ -163,26 +177,40 @@ namespace sya {
         case tt::VARIABLE: {
           auto var_name = token.get();
 
-          if (rpn_expr[i+1].get() == "=") {
-            if (stack.empty()) throw std::logic_error(fmt::format("Invalid expression: missing value for variable assignment to '{}'", var_name));
+          if ((i + 1) < rpn_expr.size() && rpn_expr[i + 1].type() == tt::OPERATOR && rpn_expr[i + 1].get() == "=") {
+            if (stack.empty())
+              throw std::logic_error(fmt::format(
+                "Invalid expression: missing value for variable assignment to '{}'", var_name));
+            
             float var_value = stack.back(); stack.pop_back(); // get the value to be assigned to the variable from the top of the stack
             auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable& v) { return v.name == var_name; });
-            if (it != variables.end()) it->value = var_value; // if variable already exists, update its value
+            if (it != variables.end())
+              it->value = var_value; // if variable already exists, update its value
             else variables.push_back({var_name, var_value}); // otherwise, create a new variable with this name and value
+            // Push the assigned value back to the stack so chained assignments keep the value available
+            stack.push_back(var_value);
+            is_assignement = true;
           } else {
-            auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable& v) { return v.name == var_name; });
-            if (it == variables.end()) throw std::logic_error(fmt::format("Undefined variable: '{}'", var_name)); // if variable is not defined, it's an undefined variable error
+            auto it = std::find_if(variables.begin(), variables.end(), [&](const Variable& v)
+              { return v.name == var_name; });
+            if (it == variables.end())
+              throw std::logic_error(fmt::format("Undefined variable: '{}'", var_name)); // if variable is not defined, it's an undefined variable error
             stack.push_back(it->value); // push the value of the variable to the stack for use in evaluation
           }
           break;
         }
         default: throw std::logic_error("Invalid token: unsupported token type during evaluation"); // handle unsupported tokens during evaluation
       }
-      i++;
     }
 
+   // if the expression contains an assignment operator, we return std::nullopt
+   // to indicate that there's no result to return, since the purpose of an assignment
+   // expression is to assign a value to a variable rather than produce a value itself
+    if (is_assignement)
+      return std::nullopt;
+
     if (stack.size() > 1) throw std::logic_error("Invalid expression: too many operands left after evaluation"); // after evaluating the entire RPN expression, there should be exactly one value left on the stack, which is the final result
-    
+    else if (stack.empty()) return std::nullopt; // if the stack is empty, it means there was no result to return (e.g., in case of an expression that only contains variable assignments without a final value), so we return std::nullopt to indicate the absence of a result
     return stack.back(); // return the final result of evaluating the RPN expression
   }
 }

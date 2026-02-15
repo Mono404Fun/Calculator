@@ -94,10 +94,12 @@ public:
   void run() {
     print_banner();
 
-    std::string input;
     while (true) {
-      std::cout << "\n> ";
+      std::string input = "";
+
+      std::cout << "> ";
       if (!std::getline(std::cin, input)) break;
+      
       if (input.empty()) continue;
       if (input[0] == ':') {
         if (!handle_command(input.substr(1))) break;
@@ -195,10 +197,12 @@ private:
     try {
       m_expr.set_expression(expr);
       m_expr.tokenize();
-      auto result = sya::evaluate_rpn(sya::to_rpn(m_expr), variables);
-      history.push_back(HistoryEntry{ history.size() + 1, std::string(expr), std::to_string(result) });
 
-      std::cout << "Expression: " << result << "\n";
+      auto result = sya::evaluate_rpn(sya::to_rpn(m_expr), variables);
+      if (result.has_value()) {
+        history.push_back(HistoryEntry{ history.size() + 1, std::string(expr), std::to_string(result.value()) });
+        std::cout << "=> " << result.value() << "\n";
+      }
     }
     catch (const std::exception& e) {
       std::cout << "Error: " << e.what() << "\n";
