@@ -14,7 +14,6 @@ namespace sya {
   bool is_unary(char op);
   bool is_right_associative(const std::string& op);
   bool is_right_associative(char op);
-  bool validate_variable_name(const std::string& name) noexcept;
   OperatorPrec opprec(const std::string& op);
 
   [[nodiscard]] float apply_operator(const std::string& op, float left, float right);

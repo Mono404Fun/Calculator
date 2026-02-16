@@ -55,6 +55,6 @@ namespace utils {
   }
 
   constexpr inline bool is_letter(const char& c) noexcept {
-    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    return std::isalpha(c) || c == '_';
   }
 } // namespace utils

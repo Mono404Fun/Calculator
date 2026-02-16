@@ -27,6 +27,7 @@ set(SOURCES
     src/expression.cpp
     src/operator.cpp
     src/logic.cpp
+    src/variable.cpp
 )
 
 # create executable

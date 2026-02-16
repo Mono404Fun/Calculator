@@ -157,9 +157,14 @@ namespace sya {
           continue;
         } else if (c == '=') {
           if (is_number(last_v()) || last_t() == tt::CLOSE_PARENT) // handle cases like "x=5" or "(1+2)=3" by treating them as "x=5" or "(1+2)=3"
-            throw std::runtime_error(fmt::format("Invalid expression: unexpected assignment operator at position {}", pos));
-          if (is_function(last_v())) // handle cases like "sin=5" by treating them as "sin=5"
-            throw std::runtime_error(fmt::format("Invalid expression: unexpected assignment operator after function name at position {}", pos));
+            throw std::runtime_error(fmt::format(
+              "Invalid expression: unexpected assignment operator at position {}", pos));
+          else if (is_function(last_v())) // handle cases like "sin=5" by treating them as "sin=5"
+            throw std::runtime_error(fmt::format(
+              "Invalid expression: unexpected assignment operator after function name at position {}", pos));
+          else if (is_constant(last_v())) // handle cases like "pi=3.14" by treating them as "pi=3.14"
+            throw std::runtime_error(fmt::format(
+              "Invalid expression: unexpected assignment operator after reserved constant name at position {}", pos));
         }
 
         if (is_operator(n) && !is_unary(n)) // handle operator duplication
@@ -179,7 +184,8 @@ namespace sya {
         push_token(); // push any current token before handling the separator
 
         if (last_t() == tt::OPEN_PARENT || n == ')' || pb == 0) // handle cases like "f(,)" or "f(x,)" where the separator is misplaced
-          throw std::runtime_error(fmt::format("Invalid separator: unexpected separator at position {}", pos));
+          throw std::runtime_error(fmt::format(
+            "Invalid separator: unexpected separator at position {}", pos));
 
         push({",", tt::SEPARATOR}); // push the separator token
         continue;
@@ -191,6 +197,7 @@ namespace sya {
     push_token();
 
     if (pb != 0) // check for mismatched parentheses after processing the entire expression
-      throw std::runtime_error(fmt::format("Mismatched parentheses: missing {} {} parenthesis", std::abs(pb), (pb > 0) ? "closing" : "opening"));
+      throw std::runtime_error(fmt::format(
+        "Mismatched parentheses: missing {} {} parenthesis", std::abs(pb), (pb > 0) ? "closing" : "opening"));
   }
 }

@@ -44,6 +44,8 @@ public:
     print_separator(os, widths);
   }
 
+  size_t row_count() { return rows_.size(); }
+
 private:
   std::vector<std::string> headers_;
   std::vector<std::vector<std::string>> rows_;
@@ -89,7 +91,7 @@ private:
 class Interface {
 public:
   Interface(std::unordered_map<std::string, std::size_t> functions)
-    : m_functions(std::move(functions)) {}
+    : m_functions(std::move(functions)), variables(sya::constants) {}
 
   void run() {
     print_banner();
@@ -113,14 +115,14 @@ public:
 private:
   std::unordered_map<std::string, std::string> commands = {
     { ":help", "Show available commands" },
-    { ":funcs", "List supported functions" },
+    { ":functions", "List supported functions" },
     { ":clear", "Clear the screen" },
     { ":quit",  "Exit program" },
     { ":history", "Show calculation history" },
-    { ":vars", "Show defined variables" },
-    { ":clearhistory", "Clear calculation history" },
-    { ":clearvars", "Clear defined variables" },
-    { ":clearall", "Clear both history and variables" },
+    { ":variables", "Show defined variables" },
+    { ":clear_history", "Clear calculation history" },
+    { ":clear_vars", "Clear defined variables" },
+    { ":clear_all", "Clear both history and variables" },
     { ":remove_variable", "Remove a specific variable by name" }
   };
   std::unordered_map<std::string, std::size_t> m_functions;
@@ -140,7 +142,7 @@ private:
     if (cmd == "quit") return false;
 
     if (cmd == "help") print_help();
-    else if (cmd == "funcs") print_functions();
+    else if (cmd == "functions") print_functions();
     else if (cmd == "clear") clear();
     else if (cmd == "history") {
       if (history.empty()) {
@@ -152,25 +154,37 @@ private:
         t.add_row({ std::to_string(entry.id), entry.expression, entry.result });
       t.print();
     }
-    else if (cmd=="vars") {
-      if (variables.empty()) {
+    else if (cmd=="variables") {
+      Table t({ "Name", "Value" });
+
+      for (const auto& [name, value] : variables) {
+        if (sya::is_constant(name)) continue; // skip constants in variable listing
+        t.add_row({ name, std::to_string(value) });
+      }
+
+      if (t.row_count() == 0) {
         std::cout << "No variables defined.\n";
         return true;
       }
+
+      t.print();
+    }
+    else if (cmd == "constants") {
       Table t({ "Name", "Value" });
-      for (const auto& [name, value] : variables)
+
+      for (const auto& [name, value] : sya::constants)
         t.add_row({ name, std::to_string(value) });
       t.print();
     }
-    else if (cmd=="clearhistory") {
+    else if (cmd=="clear_history") {
       history.clear();
       std::cout << "History cleared.\n";
     }
-    else if (cmd=="clearvars") {
+    else if (cmd=="clear_vars") {
       variables.clear();
       std::cout << "Variables cleared.\n";
     }
-    else if (cmd=="clearall") {
+    else if (cmd=="clear_all") {
       history.clear();
       variables.clear();
       std::cout << "History and variables cleared.\n";

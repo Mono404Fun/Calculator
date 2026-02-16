@@ -2,6 +2,7 @@
 
 #include "token.hpp"
 #include "utils.hpp"
+#include "variable.hpp"
 
 #include <deque> // for std::deque
 #include <string_view> // for std::string_view
