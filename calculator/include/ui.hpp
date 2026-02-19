@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <math.h>
+#include <fmt/core.h>
 
 #include "logic.hpp"
 
@@ -181,12 +182,12 @@ private:
       std::cout << "History cleared.\n";
     }
     else if (cmd=="clear_vars") {
-      variables.clear();
+      clear_variables();
       std::cout << "Variables cleared.\n";
     }
     else if (cmd=="clear_all") {
+      clear_variables();
       history.clear();
-      variables.clear();
       std::cout << "History and variables cleared.\n";
     }
     else if (cmd == "remove_variable") {
@@ -194,15 +195,22 @@ private:
       std::cout << "Enter variable name to remove: ";
       std::cin >> var_name;
 
-      auto it = std::find_if(variables.begin(), variables.end(), [&](const sya::Variable var)
-                                                                { return var.name == var_name; });
-      if (it != variables.end()) {
-        variables.erase(it);
-        std::cout << "Variable '" << var_name << "' removed.\n";
+      if (sya::is_constant(var_name)) {
+        std::cout << fmt::format(
+          "Error: Cannot remove variable: {}, it is a reserved constant.\n", var_name);
       } else {
-        std::cout << "Variable '" << var_name << "' not found.\n";
+
+        auto it = std::find_if(variables.begin(), variables.end(), [&](const sya::Variable var)
+                                                                  { return var.name == var_name; });
+        if (it != variables.end()) {
+          variables.erase(it);
+          std::cout << "Variable '" << var_name << "' removed.\n";
+        } else {
+          std::cout << "Variable '" << var_name << "' not found.\n";
+        }
       }
     }
+
     else std::cout << "Unknown command. Use :help\n";
     return true;
   }
@@ -237,6 +245,19 @@ private:
       t.add_row({ name, std::to_string(argc) });
 
     t.print();
+  }
+
+  void clear_variables() {
+    size_t len = variables.size()-sya::constants.size();
+    std::vector<sya::Variable> temp;
+    temp.reserve(len);
+
+    for (const auto& var : variables)  {
+      if (sya::is_constant(var.name)) temp.push_back(var);
+      continue;
+    }
+
+    variables = temp;
   }
 
   static void clear() {
